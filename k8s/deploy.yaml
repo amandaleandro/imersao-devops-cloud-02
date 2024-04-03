@@ -1,0 +1,85 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata: 
+  name: postgre
+  labels: 
+    app: postgre
+spec: 
+  selector:
+    matchLabels:
+      app: postgre
+  template:
+    metadata:
+      labels:
+        app: postgre
+    spec:
+      containers:
+        - name: postgre
+          image: postgres:latest  # Adicione a imagem do PostgreSQL aqui
+          ports:
+            - containerPort: 5432
+          env: 
+            - name: POSTGRES_USER
+              value: newsuser
+            - name: POSTGRES_PASSWORD
+              value: newspassword
+            - name: POSTGRES_DB
+              value: newsdb
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgre
+spec:
+  selector:
+    app: postgre
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata: 
+  name: web
+spec: 
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: amandalscarmo/devops4devs-news
+          ports:
+            - containerPort: 8080
+          env: 
+            - name: DB_DATABASE
+              value: newsdb
+            - name: DB_USERNAME
+              value: newsuser
+            - name: DB_PASSWORD
+              value: newspassword
+            - name: DB_HOST
+              value: postgre
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer  # Definindo o tipo de serviço como LoadBalancer
+  loadBalancerIP: 1.2.3.4  # Opcional: atribui um IP específico ao LoadBalancer
+  externalTrafficPolicy: Local  # Opcional: define a política de tráfego para o LoadBalancer
